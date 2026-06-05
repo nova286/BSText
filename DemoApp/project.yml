@@ -18,9 +18,10 @@ targets:
                 UISceneDelegateClassName: "$(PRODUCT_MODULE_NAME).SceneDelegate"
     sources:
       - path: .
-        exclude:
+        excludes:
           - Info.plist
           - project.yml
+          - BSTextDemoAppUITests/
     dependencies:
       - package: BSText
     settings:
@@ -29,6 +30,20 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.BSTextTest1
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 5FW9DTQ6YS
+  BSTextDemoAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    info:
+      path: BSTextDemoAppUITests/Info.plist
+    sources:
+      - path: BSTextDemoAppUITests
+    dependencies:
+      - target: BSTextDemoApp
+      - package: BSText
+    settings:
+      base:
+        SWIFT_VERSION: 5.9
+        INFOPLIST_FILE: BSTextDemoAppUITests/Info.plist
 packages:
   BSText:
     path: ../
