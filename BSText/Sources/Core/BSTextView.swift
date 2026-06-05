@@ -12,6 +12,7 @@
 //
 
 import UIKit
+import CoreText
 
 /// The main text view class for BSText 3.0.
 ///
@@ -49,6 +50,9 @@ import UIKit
 ///
 @objcMembers
 open class BSTextView: UITextView {
+
+    private static let italicObliqueness: Float = 0.35
+    private static let syntheticItalicFontAttribute = NSAttributedString.Key(kCTFontAttributeName as String)
 
     // MARK: - TextKit 2 Components
 
@@ -478,14 +482,16 @@ open class BSTextView: UITextView {
     public func toggleBold() {
         let range = selectedRange
         if range.length > 0 {
-            let currentFont = textStorage.attribute(.font, at: range.location, effectiveRange: nil) as? UIFont
+            let currentFont = textStorage.attribute(.font, at: range.location, effectiveRange: nil) as? UIFont ?? UIFont.systemFont(ofSize: 17)
+            
+            let newFont = currentFont.isBold ? currentFont.unbolded : currentFont.bolded
             
             textStorage.beginEditing()
-            if let font = currentFont {
-                let newFont = font.isBold ? font.unbolded : font.bolded
-                textStorage.addAttribute(.font, value: newFont, range: range)
-            }
+            textStorage.addAttribute(.font, value: newFont, range: range)
             textStorage.endEditing()
+            
+            // Force redraw
+            setNeedsDisplay()
         } else {
             // Apply to typing attributes
             let currentFont = typingAttributes[.font] as? UIFont ?? UIFont.systemFont(ofSize: 17)
@@ -497,19 +503,74 @@ open class BSTextView: UITextView {
     public func toggleItalic() {
         let range = selectedRange
         if range.length > 0 {
-            let currentFont = textStorage.attribute(.font, at: range.location, effectiveRange: nil) as? UIFont
+            let currentFont = textStorage.attribute(.font, at: range.location, effectiveRange: nil) as? UIFont ?? UIFont.systemFont(ofSize: 17)
+            let hasObliqueness = Self.hasItalicObliqueness(textStorage.attribute(.obliqueness, at: range.location, effectiveRange: nil))
+            let hasSyntheticFont = Self.hasSyntheticItalicFont(textStorage.attribute(Self.syntheticItalicFontAttribute, at: range.location, effectiveRange: nil))
+            let shouldApplyItalic = !hasObliqueness && !hasSyntheticFont
+            
+            let newFont = shouldApplyItalic ? currentFont.visuallyItalicized : currentFont.visuallyUnitalicized
             
             textStorage.beginEditing()
-            if let font = currentFont {
-                let newFont = font.isItalic ? font.unitalicized : font.italicized
-                textStorage.addAttribute(.font, value: newFont, range: range)
+            textStorage.addAttribute(.font, value: newFont, range: range)
+            if shouldApplyItalic {
+                textStorage.addAttribute(.obliqueness, value: NSNumber(value: Self.italicObliqueness), range: range)
+                textStorage.addAttribute(Self.syntheticItalicFontAttribute, value: Self.syntheticItalicFont(from: newFont), range: range)
+            } else {
+                textStorage.removeAttribute(.obliqueness, range: range)
+                textStorage.removeAttribute(Self.syntheticItalicFontAttribute, range: range)
             }
             textStorage.endEditing()
+            
+            // Force redraw
+            setNeedsDisplay()
         } else {
             // Apply to typing attributes
             let currentFont = typingAttributes[.font] as? UIFont ?? UIFont.systemFont(ofSize: 17)
-            typingAttributes[.font] = currentFont.isItalic ? currentFont.unitalicized : currentFont.italicized
+            let hasObliqueness = Self.hasItalicObliqueness(typingAttributes[.obliqueness])
+            let hasSyntheticFont = Self.hasSyntheticItalicFont(typingAttributes[Self.syntheticItalicFontAttribute])
+            let shouldApplyItalic = !hasObliqueness && !hasSyntheticFont
+            typingAttributes[.font] = shouldApplyItalic ? currentFont.visuallyItalicized : currentFont.visuallyUnitalicized
+            if shouldApplyItalic {
+                typingAttributes[.obliqueness] = NSNumber(value: Self.italicObliqueness)
+                typingAttributes[Self.syntheticItalicFontAttribute] = Self.syntheticItalicFont(from: currentFont)
+            } else {
+                typingAttributes.removeValue(forKey: .obliqueness)
+                typingAttributes.removeValue(forKey: Self.syntheticItalicFontAttribute)
+            }
         }
+    }
+
+    private static func syntheticItalicFont(from font: UIFont) -> CTFont {
+        var transform = CGAffineTransform(a: 1, b: 0, c: CGFloat(italicObliqueness), d: 1, tx: 0, ty: 0)
+        return CTFontCreateWithName(font.fontName as CFString, font.pointSize, &transform)
+    }
+
+    private static func hasItalicObliqueness(_ value: Any?) -> Bool {
+        if let number = value as? NSNumber {
+            return abs(number.floatValue) > 0.001
+        }
+
+        if let value = value as? CGFloat {
+            return abs(value) > 0.001
+        }
+
+        if let value = value as? Float {
+            return abs(value) > 0.001
+        }
+
+        if let value = value as? Double {
+            return abs(value) > 0.001
+        }
+
+        return false
+    }
+
+    private static func hasSyntheticItalicFont(_ value: Any?) -> Bool {
+        guard let font = value else {
+            return false
+        }
+
+        return abs(CTFontGetMatrix(font as! CTFont).c) > 0.001
     }
     
     // MARK: - Text Search
@@ -551,4 +612,3 @@ open class BSTextView: UITextView {
         return ranges
     }
 }
-

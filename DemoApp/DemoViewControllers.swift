@@ -75,7 +75,7 @@ class EditDemoViewController: UIViewController {
         textView.layer.borderColor = UIColor.lightGray.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 8
-        textView.text = "在此输入文本..."
+        textView.text = "Edit sample text\n中文编辑示例"
         view.addSubview(textView)
         
         NSLayoutConstraint.activate([
@@ -109,112 +109,11 @@ class EditDemoViewController: UIViewController {
     }
     
     @objc func toggleBold() {
-        let selectedRange = textView.selectedRange
-        
-        if selectedRange.length > 0 {
-            let existingFont = textView.textStorage.attribute(
-                .font,
-                at: selectedRange.location,
-                effectiveRange: nil
-            ) as? UIFont ?? textView.font ?? .systemFont(ofSize: 16)
-            
-            let traits = existingFont.fontDescriptor.symbolicTraits
-            let isBold = traits.contains(.traitBold)
-            
-            var newTraits = traits
-            if isBold {
-                newTraits.remove(.traitBold)
-            } else {
-                newTraits.insert(.traitBold)
-            }
-            
-            if let newDescriptor = existingFont.fontDescriptor.withSymbolicTraits(newTraits) {
-                let newFont = UIFont(descriptor: newDescriptor, size: existingFont.pointSize)
-                textView.textStorage.beginEditing()
-                textView.textStorage.addAttribute(.font, value: newFont, range: selectedRange)
-                textView.textStorage.endEditing()
-            }
-        } else {
-            let existingFont = textView.typingAttributes[.font] as? UIFont ?? textView.font ?? .systemFont(ofSize: 16)
-            let traits = existingFont.fontDescriptor.symbolicTraits
-            let isBold = traits.contains(.traitBold)
-            
-            var newTraits = traits
-            if isBold {
-                newTraits.remove(.traitBold)
-            } else {
-                newTraits.insert(.traitBold)
-            }
-            
-            if let newDescriptor = existingFont.fontDescriptor.withSymbolicTraits(newTraits) {
-                textView.typingAttributes[.font] = UIFont(descriptor: newDescriptor, size: existingFont.pointSize)
-            }
-        }
+        textView.toggleBold()
     }
     
     @objc func toggleItalic() {
-        let selectedRange = textView.selectedRange
-        
-        if selectedRange.length > 0 {
-            let existingFont = textView.textStorage.attribute(
-                .font,
-                at: selectedRange.location,
-                effectiveRange: nil
-            ) as? UIFont ?? textView.font ?? .systemFont(ofSize: 16)
-            
-            let traits = existingFont.fontDescriptor.symbolicTraits
-            let isItalic = traits.contains(.traitItalic)
-            let isBold = traits.contains(.traitBold)
-            
-            var newFont: UIFont
-            if isItalic {
-                newFont = isBold ? .boldSystemFont(ofSize: existingFont.pointSize) : .systemFont(ofSize: existingFont.pointSize)
-            } else {
-                if isBold {
-                    let descriptor = UIFont.systemFont(ofSize: existingFont.pointSize).fontDescriptor
-                    var boldItalicTraits = descriptor.symbolicTraits
-                    boldItalicTraits.insert(.traitBold)
-                    boldItalicTraits.insert(.traitItalic)
-                    if let boldItalicDescriptor = descriptor.withSymbolicTraits(boldItalicTraits) {
-                        newFont = UIFont(descriptor: boldItalicDescriptor, size: existingFont.pointSize)
-                    } else {
-                        newFont = .italicSystemFont(ofSize: existingFont.pointSize)
-                    }
-                } else {
-                    newFont = .italicSystemFont(ofSize: existingFont.pointSize)
-                }
-            }
-            
-            textView.textStorage.beginEditing()
-            textView.textStorage.addAttribute(.font, value: newFont, range: selectedRange)
-            textView.textStorage.endEditing()
-        } else {
-            let existingFont = textView.typingAttributes[.font] as? UIFont ?? textView.font ?? .systemFont(ofSize: 16)
-            let traits = existingFont.fontDescriptor.symbolicTraits
-            let isItalic = traits.contains(.traitItalic)
-            let isBold = traits.contains(.traitBold)
-            
-            var newFont: UIFont
-            if isItalic {
-                newFont = isBold ? .boldSystemFont(ofSize: existingFont.pointSize) : .systemFont(ofSize: existingFont.pointSize)
-            } else {
-                if isBold {
-                    let descriptor = UIFont.systemFont(ofSize: existingFont.pointSize).fontDescriptor
-                    var boldItalicTraits = descriptor.symbolicTraits
-                    boldItalicTraits.insert(.traitBold)
-                    boldItalicTraits.insert(.traitItalic)
-                    if let boldItalicDescriptor = descriptor.withSymbolicTraits(boldItalicTraits) {
-                        newFont = UIFont(descriptor: boldItalicDescriptor, size: existingFont.pointSize)
-                    } else {
-                        newFont = .italicSystemFont(ofSize: existingFont.pointSize)
-                    }
-                } else {
-                    newFont = .italicSystemFont(ofSize: existingFont.pointSize)
-                }
-            }
-            
-            textView.typingAttributes[.font] = newFont
-        }
+        textView.toggleItalic()
     }
 }
 

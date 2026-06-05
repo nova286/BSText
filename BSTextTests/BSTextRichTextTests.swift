@@ -49,6 +49,17 @@ final class BSTextMarkdownParserTests: XCTestCase {
         XCTAssertNotNil(attributedString)
         XCTAssertGreaterThan(attributedString.length, 0)
     }
+
+    func testMarkdownParserDoesNotLetItalicPatternConsumeBoldDelimiters() {
+        let attributedString = parser.parse("**Bold text** and *italic text* supported.")
+        let nsString = attributedString.string as NSString
+        let italicRange = nsString.range(of: "italic text")
+
+        XCTAssertNotEqual(italicRange.location, NSNotFound)
+
+        let font = attributedString.attribute(.font, at: italicRange.location, effectiveRange: nil) as? UIFont
+        XCTAssertTrue(font?.fontDescriptor.symbolicTraits.contains(.traitItalic) == true)
+    }
 }
 
 final class BSTextSyntaxParserTests: XCTestCase {

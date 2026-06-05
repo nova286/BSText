@@ -29,6 +29,8 @@ extension unichar {
 }
 
 extension UIFont {
+    private static let syntheticItalicShear: CGFloat = 0.35
+
     var isBold: Bool {
         return fontDescriptor.symbolicTraits.contains(.traitBold)
     }
@@ -40,36 +42,83 @@ extension UIFont {
     var bolded: UIFont {
         var traits = fontDescriptor.symbolicTraits
         traits.insert(.traitBold)
-        guard let descriptor = fontDescriptor.withSymbolicTraits(traits) else {
-            return self
+        if let descriptor = fontDescriptor.withSymbolicTraits(traits) {
+            return UIFont(descriptor: descriptor, size: pointSize)
         }
-        return UIFont(descriptor: descriptor, size: pointSize)
+        // Fallback: use system bold font
+        return UIFont.boldSystemFont(ofSize: pointSize)
     }
     
     var unbolded: UIFont {
         var traits = fontDescriptor.symbolicTraits
         traits.remove(.traitBold)
-        guard let descriptor = fontDescriptor.withSymbolicTraits(traits) else {
-            return self
+        if let descriptor = fontDescriptor.withSymbolicTraits(traits) {
+            return UIFont(descriptor: descriptor, size: pointSize)
         }
-        return UIFont(descriptor: descriptor, size: pointSize)
+        // Fallback: use system regular font
+        return UIFont.systemFont(ofSize: pointSize)
     }
     
     var italicized: UIFont {
         var traits = fontDescriptor.symbolicTraits
         traits.insert(.traitItalic)
-        guard let descriptor = fontDescriptor.withSymbolicTraits(traits) else {
-            return self
-        }
+
+        let baseDescriptor = fontDescriptor.withSymbolicTraits(traits) ?? fontDescriptor
+        let italicDescriptor = baseDescriptor.addingAttributes([
+            .matrix: CGAffineTransform(a: 1, b: 0, c: UIFont.syntheticItalicShear, d: 1, tx: 0, ty: 0)
+        ])
+        return UIFont(descriptor: italicDescriptor, size: pointSize)
+    }
+
+    var syntheticItalicized: UIFont {
+        let descriptor = fontDescriptor.addingAttributes([
+            .matrix: CGAffineTransform(a: 1, b: 0, c: UIFont.syntheticItalicShear, d: 1, tx: 0, ty: 0)
+        ])
         return UIFont(descriptor: descriptor, size: pointSize)
+    }
+
+    var syntheticUnitalicized: UIFont {
+        let descriptor = fontDescriptor.addingAttributes([
+            .matrix: CGAffineTransform.identity
+        ])
+        return UIFont(descriptor: descriptor, size: pointSize)
+    }
+
+    var hasSyntheticItalic: Bool {
+        let matrix = fontDescriptor.object(forKey: .matrix)
+
+        if let value = matrix as? NSValue {
+            return abs(value.cgAffineTransformValue.c) > 0.001
+        }
+
+        if let transform = matrix as? CGAffineTransform {
+            return abs(transform.c) > 0.001
+        }
+
+        return false
+    }
+
+    var visuallyItalicized: UIFont {
+        let italicFont = italicized
+        if italicFont.isItalic || italicFont.hasSyntheticItalic {
+            return italicFont
+        }
+
+        // Fallback: use system italic font
+        return UIFont.italicSystemFont(ofSize: pointSize).syntheticItalicized
+    }
+
+    var visuallyUnitalicized: UIFont {
+        return unitalicized.syntheticUnitalicized
     }
     
     var unitalicized: UIFont {
         var traits = fontDescriptor.symbolicTraits
         traits.remove(.traitItalic)
-        guard let descriptor = fontDescriptor.withSymbolicTraits(traits) else {
-            return self
+        if let descriptor = fontDescriptor.withSymbolicTraits(traits) {
+            return UIFont(descriptor: descriptor, size: pointSize)
         }
-        return UIFont(descriptor: descriptor, size: pointSize)
+        // Fallback: use system regular font
+        return UIFont.systemFont(ofSize: pointSize)
     }
 }

@@ -194,8 +194,8 @@ open class BSTextMarkdownParser: NSObject {
         let patterns: [(pattern: String, type: BSTextMarkdownInlineType)] = [
             ("\\*\\*(.+?)\\*\\*", .bold),
             ("__(.+?)__", .bold),
-            ("\\*(.+?)\\*", .italic),
-            ("_(.+?)_", .italic),
+            ("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)", .italic),
+            ("(?<!_)_(?!_)(.+?)(?<!_)_(?!_)", .italic),
             ("~~(.+?)~~", .strikethrough),
             ("`(.+?)`", .code),
             ("@(\\w+)", .mention),
