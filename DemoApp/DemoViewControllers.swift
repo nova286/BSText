@@ -42,9 +42,6 @@ class AttributeDemoViewController: UIViewController {
         ]
         attributedText.append(NSAttributedString(string: "Strikethrough Text\n", attributes: strikethroughAttributes))
         
-        let shadowAttributes: [NSAttributedString.Key: Any] = [
-            .shadow: NSShadow()
-        ]
         let shadow = NSShadow()
         shadow.shadowOffset = CGSize(width: 2, height: 2)
         shadow.shadowColor = UIColor.gray
@@ -159,32 +156,96 @@ class TagDemoViewController: UIViewController {
         let textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.isEditable = false
-        textView.font = .systemFont(ofSize: 16)
+        textView.isScrollEnabled = false
+        textView.backgroundColor = .clear
+        textView.textContainerInset = UIEdgeInsets(top: 22, left: 18, bottom: 22, right: 18)
         textView.layer.borderColor = UIColor.lightGray.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 8
+        textView.attributedText = Self.mixedTagText()
         view.addSubview(textView)
-        
-        let attributedText = NSMutableAttributedString()
-        attributedText.append(NSAttributedString(string: "Tags: "))
-        
-        let tags = ["#iOS", "#Swift", "#BSText", "#TextKit"]
-        for (index, tag) in tags.enumerated() {
-            let mentionAttachment = BSTextAttachment.mentionAttachment(username: tag)
-            attributedText.append(NSAttributedString(attachment: mentionAttachment))
-            if index < tags.count - 1 {
-                attributedText.append(NSAttributedString(string: " "))
-            }
-        }
-        
-        textView.attributedText = attributedText
-        
+
         NSLayoutConstraint.activate([
             textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            textView.heightAnchor.constraint(equalToConstant: 100)
+            textView.heightAnchor.constraint(equalToConstant: 260)
         ])
+    }
+
+    private static func mixedTagText() -> NSAttributedString {
+        let bodyFont = UIFont.systemFont(ofSize: 17)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 8
+        paragraphStyle.lineBreakMode = .byWordWrapping
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: bodyFont,
+            .foregroundColor: UIColor.label,
+            .paragraphStyle: paragraphStyle
+        ]
+
+        let attributedText = NSMutableAttributedString(string: "Tags: ", attributes: attributes)
+        let tags = [
+            "#iOS", "#Swift", "#BSText", "#TextKit", "#UIKit",
+            "#CoreText", "#AsyncRender", "#Markdown", "#Attachment", "#Layout"
+        ]
+
+        for tag in tags {
+            let attachmentString = NSMutableAttributedString(attachment: InlineTagAttachment(title: tag, font: bodyFont))
+            attachmentString.addAttributes(attributes, range: NSRange(location: 0, length: attachmentString.length))
+            attributedText.append(attachmentString)
+            attributedText.append(NSAttributedString(string: " ", attributes: attributes))
+        }
+
+        attributedText.append(NSAttributedString(
+            string: "These tags should wrap naturally and keep the following plain text aligned with the same paragraph flow.",
+            attributes: attributes
+        ))
+
+        return attributedText
+    }
+}
+
+private final class InlineTagAttachment: NSTextAttachment {
+    private let tagSize: CGSize
+    private let baselineOffset: CGFloat
+
+    init(title: String, font: UIFont) {
+        let chipFont = UIFont.systemFont(ofSize: 16, weight: .medium)
+        let text = NSAttributedString(string: title, attributes: [
+            .font: chipFont,
+            .foregroundColor: UIColor.systemBlue
+        ])
+        let insets = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
+        let textSize = text.size()
+        tagSize = CGSize(
+            width: ceil(textSize.width + insets.left + insets.right),
+            height: ceil(textSize.height + insets.top + insets.bottom)
+        )
+        baselineOffset = round((font.capHeight - tagSize.height) / 2)
+
+        super.init(data: nil, ofType: nil)
+
+        let renderer = UIGraphicsImageRenderer(size: tagSize)
+        image = renderer.image { _ in
+            UIColor.systemBlue.withAlphaComponent(0.12).setFill()
+            UIBezierPath(roundedRect: CGRect(origin: .zero, size: tagSize), cornerRadius: 6).fill()
+            UIColor.systemBlue.withAlphaComponent(0.2).setStroke()
+            UIBezierPath(
+                roundedRect: CGRect(origin: CGPoint(x: 0.5, y: 0.5), size: CGSize(width: tagSize.width - 1, height: tagSize.height - 1)),
+                cornerRadius: 6
+            ).stroke()
+            text.draw(at: CGPoint(x: insets.left, y: insets.top))
+        }
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func attachmentBounds(for textContainer: NSTextContainer?, proposedLineFragment lineFrag: CGRect, glyphPosition position: CGPoint, characterIndex charIndex: Int) -> CGRect {
+        CGRect(x: 0, y: baselineOffset, width: tagSize.width, height: tagSize.height)
     }
 }
 
@@ -318,13 +379,17 @@ class CopyPasteDemoViewController: UIViewController {
     }
 }
 
-class UndoRedoDemoViewController: UIViewController {
+class UndoRedoDemoViewController: UIViewController, UITextViewDelegate {
+    private let textView = BSTextView()
+    private var undoButton: UIBarButtonItem!
+    private var redoButton: UIBarButtonItem!
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         
-        let textView = BSTextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.delegate = self
         textView.font = .systemFont(ofSize: 16)
         textView.layer.borderColor = UIColor.lightGray.cgColor
         textView.layer.borderWidth = 1
@@ -335,8 +400,8 @@ class UndoRedoDemoViewController: UIViewController {
         let toolbar = UIToolbar()
         toolbar.translatesAutoresizingMaskIntoConstraints = false
         
-        let undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: nil, action: nil)
-        let redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: nil, action: nil)
+        undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: self, action: #selector(performUndo))
+        redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(performRedo))
         
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         toolbar.items = [undoButton, flexibleSpace, redoButton]
@@ -354,24 +419,66 @@ class UndoRedoDemoViewController: UIViewController {
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             toolbar.heightAnchor.constraint(equalToConstant: 44)
         ])
+
+        refreshUndoRedoButtons()
+    }
+
+    func textViewDidChange(_ textView: UITextView) {
+        refreshUndoRedoButtons()
+    }
+
+    @objc private func performUndo() {
+        textView.undoManager?.undo()
+        refreshUndoRedoButtons()
+    }
+
+    @objc private func performRedo() {
+        textView.undoManager?.redo()
+        refreshUndoRedoButtons()
+    }
+
+    @objc private func refreshUndoRedoButtons() {
+        undoButton?.isEnabled = textView.undoManager?.canUndo == true
+        redoButton?.isEnabled = textView.undoManager?.canRedo == true
     }
 }
 
 class TableDemoViewController: UIViewController {
+    private let textView = BSTextView()
+    private var lastRenderedWidth: CGFloat = 0
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         title = "Table Support"
         
-        let textView = BSTextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.isEditable = false
+        textView.isScrollEnabled = true
         textView.font = .systemFont(ofSize: 16)
+        textView.textContainerInset = UIEdgeInsets(top: 18, left: 12, bottom: 18, right: 12)
         textView.layer.borderColor = UIColor.lightGray.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 8
         view.addSubview(textView)
-        
+
+        NSLayoutConstraint.activate([
+            textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            textView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+        ])
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let availableWidth = floor(textView.bounds.width - textView.textContainerInset.left - textView.textContainerInset.right)
+        guard availableWidth > 0, abs(availableWidth - lastRenderedWidth) > 0.5 else { return }
+        lastRenderedWidth = availableWidth
+        renderTableContent(width: availableWidth)
+    }
+
+    private func renderTableContent(width: CGFloat) {
         let attributedText = NSMutableAttributedString()
         
         let titleAttributes: [NSAttributedString.Key: Any] = [
@@ -390,7 +497,7 @@ class TableDemoViewController: UIViewController {
 """
         
         let tableAttachment = BSTextTableAttachment.tableAttachment(from: markdownTable)
-        tableAttachment.displaySize = CGSize(width: view.bounds.width - 32, height: 160)
+        tableAttachment.displaySize = CGSize(width: width, height: tableAttachment.displaySize.height)
         
         if let tableImage = tableAttachment.renderTable() {
             tableAttachment.image = tableImage
@@ -406,12 +513,5 @@ class TableDemoViewController: UIViewController {
         attributedText.append(description)
         
         textView.attributedText = attributedText
-        
-        NSLayoutConstraint.activate([
-            textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            textView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
-        ])
     }
 }

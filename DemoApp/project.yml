@@ -31,7 +31,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 5FW9DTQ6YS
   BSTextDemoAppTests:
-    type: bundle.unit-test
+    type: bundle.ui-testing
     platform: iOS
     info:
       path: BSTextDemoAppUITests/Info.plist

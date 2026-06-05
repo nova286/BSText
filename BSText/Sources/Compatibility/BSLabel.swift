@@ -1,4 +1,5 @@
 import UIKit
+import CoreText
 
 @available(iOS 13.0, *)
 open class BSLabel: UIView {
@@ -149,6 +150,11 @@ open class BSLabel: UIView {
             finalText = parser.parse(text)
         }
 
+        if verticalForm {
+            drawVerticalText(finalText, in: textRect, context: context)
+            return
+        }
+
         let boundingRect = finalText.boundingRect(
             with: CGSize(width: textRect.width, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin, .usesFontLeading],
@@ -175,6 +181,32 @@ open class BSLabel: UIView {
         UIGraphicsPushContext(context)
         finalText.draw(in: drawRect)
         UIGraphicsPopContext()
+    }
+
+    private func drawVerticalText(_ attributedText: NSAttributedString, in textRect: CGRect, context: CGContext) {
+        let verticalText = NSMutableAttributedString(attributedString: attributedText)
+        let fullRange = NSRange(location: 0, length: verticalText.length)
+        verticalText.addAttribute(NSAttributedString.Key(kCTVerticalFormsAttributeName as String), value: true, range: fullRange)
+
+        let framesetter = CTFramesetterCreateWithAttributedString(verticalText)
+        let frameAttributes = [
+            kCTFrameProgressionAttributeName: CTFrameProgression.rightToLeft.rawValue
+        ] as CFDictionary
+        let coreTextRect = CGRect(
+            x: textRect.minX,
+            y: bounds.height - textRect.maxY,
+            width: textRect.width,
+            height: textRect.height
+        )
+        let path = CGPath(rect: coreTextRect, transform: nil)
+        let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: 0, length: verticalText.length), path, frameAttributes)
+
+        context.saveGState()
+        context.textMatrix = .identity
+        context.translateBy(x: 0, y: bounds.height)
+        context.scaleBy(x: 1, y: -1)
+        CTFrameDraw(frame, context)
+        context.restoreGState()
     }
 
     open override var intrinsicContentSize: CGSize {

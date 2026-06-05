@@ -17,6 +17,7 @@
 		A0250DD2567772403378E929 /* BSText in Frameworks */ = {isa = PBXBuildFile; productRef = F631676900A86241F226E552 /* BSText */; };
 		A9DDD42CBAF4EC9290C264E8 /* DemoViewControllers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0366511240049B5D634531F3 /* DemoViewControllers.swift */; };
 		BB8215E23ED8EED89BDF1C95 /* AsyncDemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48786AFD5B39D721857ECCC1 /* AsyncDemoViewController.swift */; };
+		E71CFEB796814805611BA78B /* YYTextStyleDemos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14EFA72EF6915F753F6A5D40 /* YYTextStyleDemos.swift */; };
 		EF220D3CA2910758443DED83 /* BSTextDemoAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D83B5E7ECC24B530E2E531B /* BSTextDemoAppUITests.swift */; };
 		F326E09477997A9DE0A1D019 /* BSTextDemoApp.xcodeproj in Resources */ = {isa = PBXBuildFile; fileRef = B2156C1CD62119C3AB233EC4 /* BSTextDemoApp.xcodeproj */; };
 /* End PBXBuildFile section */
@@ -37,6 +38,7 @@
 		08709A81B430D44978C7D294 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		0FA90E67A157F53C1D87E2E3 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		119C58BC3632D36B2E701D88 /* ResizeDemoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeDemoViewController.swift; sourceTree = "<group>"; };
+		14EFA72EF6915F753F6A5D40 /* YYTextStyleDemos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YYTextStyleDemos.swift; sourceTree = "<group>"; };
 		3AB28A86572443B78905B3E1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		48786AFD5B39D721857ECCC1 /* AsyncDemoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncDemoViewController.swift; sourceTree = "<group>"; };
 		6D83B5E7ECC24B530E2E531B /* BSTextDemoAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BSTextDemoAppUITests.swift; sourceTree = "<group>"; };
@@ -98,12 +100,13 @@
 				119C58BC3632D36B2E701D88 /* ResizeDemoViewController.swift */,
 				A6825A77C1F5D8BE51375F45 /* SceneDelegate.swift */,
 				08709A81B430D44978C7D294 /* ViewController.swift */,
+				14EFA72EF6915F753F6A5D40 /* YYTextStyleDemos.swift */,
 			);
 			name = DemoApp;
 			path = .;
 			sourceTree = "<group>";
 		};
-		6B27635E2FB5726400B59477 /* Products */ = {
+		6BAF444F2FD3067F00983B0F /* Products */ = {
 			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
@@ -147,7 +150,7 @@
 			);
 			productName = BSTextDemoAppTests;
 			productReference = 05A786B513B9E3CDC401DD9B /* BSTextDemoAppTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		31CEE7DBE6A697F60EA84096 /* BSTextDemoApp */ = {
 			isa = PBXNativeTarget;
@@ -178,6 +181,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					16B66D3886F8D53D89A8D3C7 = {
+						TestTargetID = 31CEE7DBE6A697F60EA84096;
+					};
 					31CEE7DBE6A697F60EA84096 = {
 						DevelopmentTeam = 5FW9DTQ6YS;
 						ProvisioningStyle = Automatic;
@@ -201,7 +207,7 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 6B27635E2FB5726400B59477 /* Products */;
+					ProductGroup = 6BAF444F2FD3067F00983B0F /* Products */;
 					ProjectRef = B2156C1CD62119C3AB233EC4 /* BSTextDemoApp.xcodeproj */;
 				},
 			);
@@ -245,6 +251,7 @@
 				97110BAD67B85A744782CF83 /* ResizeDemoViewController.swift in Sources */,
 				8AB741805ABE007735CF2649 /* SceneDelegate.swift in Sources */,
 				8432FD15EDCB5B65E936C1F5 /* ViewController.swift in Sources */,
+				E71CFEB796814805611BA78B /* YYTextStyleDemos.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,7 +279,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BSTextDemoApp.app/BSTextDemoApp";
+				TEST_TARGET_NAME = BSTextDemoApp;
 			};
 			name = Debug;
 		};
@@ -289,7 +296,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BSTextDemoApp.app/BSTextDemoApp";
+				TEST_TARGET_NAME = BSTextDemoApp;
 			};
 			name = Release;
 		};
